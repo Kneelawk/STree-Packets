@@ -268,7 +268,11 @@ public class PacketServerConnection {
 		packetConnections.get(new SCD(ip, port)).sendPacket(packet);
 	}
 
-	// SCD (SocketConnectionDescription)
+	/**
+	 * SDC: Socket Connection Description
+	 * @author jedidiah
+	 *
+	 */
 	protected static class SCD implements Comparable<SCD> {
 		public String address;
 		public int port;
@@ -302,7 +306,11 @@ public class PacketServerConnection {
 		}
 	}
 
-	// NPL (NamedPacketListener)
+	/**
+	 * NPL: Named Packet Listener
+	 * @author jedidiah
+	 *
+	 */
 	protected static class NPL {
 		public PacketListener listener;
 		public String[] names;
