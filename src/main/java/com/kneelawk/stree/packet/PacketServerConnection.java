@@ -37,9 +37,15 @@ import java.util.TreeMap;
 import com.kneelawk.stree.packet.listener.ConnectionListener;
 import com.kneelawk.stree.packet.listener.DisconnectionListener;
 import com.kneelawk.stree.packet.listener.PacketListener;
+import com.kneelawk.stree.packet.streamProviders.InputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.OutputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.ThroughInputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.ThroughOutputStreamProvider;
 
 public class PacketServerConnection {
 	protected ServerSocket socket;
+	protected InputStreamProvider isProvider;
+	protected OutputStreamProvider osProvider;
 	protected TreeMap<SCD, PacketConnection> packetConnections;
 	protected ArrayList<ConnectionListener> connectionListeners;
 	protected ArrayList<PacketListener> toAddPacketListeners;
@@ -50,7 +56,15 @@ public class PacketServerConnection {
 	protected boolean running = false;
 
 	public PacketServerConnection(ServerSocket serverSocket) {
+		this(serverSocket, new ThroughInputStreamProvider(),
+				new ThroughOutputStreamProvider());
+	}
+
+	public PacketServerConnection(ServerSocket serverSocket,
+			InputStreamProvider inProv, OutputStreamProvider outProv) {
 		socket = serverSocket;
+		isProvider = inProv;
+		osProvider = outProv;
 		packetConnections = new TreeMap<SCD, PacketConnection>();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		toAddPacketListeners = new ArrayList<PacketListener>();
@@ -191,7 +205,8 @@ public class PacketServerConnection {
 								clientSocket.getPort());
 						PacketConnection conn = null;
 						try {
-							conn = new PacketConnection(clientSocket);
+							conn = new PacketConnection(clientSocket,
+									isProvider, osProvider);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -270,7 +285,8 @@ public class PacketServerConnection {
 
 	/**
 	 * SDC: Socket Connection Description
-	 * @author jedidiah
+	 * 
+	 * @author kneelawk
 	 *
 	 */
 	protected static class SCD implements Comparable<SCD> {
@@ -308,7 +324,8 @@ public class PacketServerConnection {
 
 	/**
 	 * NPL: Named Packet Listener
-	 * @author jedidiah
+	 * 
+	 * @author kneelawk
 	 *
 	 */
 	protected static class NPL {

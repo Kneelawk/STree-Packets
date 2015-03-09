@@ -35,25 +35,37 @@ import java.util.TreeMap;
 
 import com.kneelawk.stree.packet.listener.DisconnectionListener;
 import com.kneelawk.stree.packet.listener.PacketListener;
+import com.kneelawk.stree.packet.streamProviders.InputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.OutputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.ThroughInputStreamProvider;
+import com.kneelawk.stree.packet.streamProviders.ThroughOutputStreamProvider;
 
 public class PacketConnection {
-	protected static final int EVENT_NOTHING = 0;
-	protected static final int EVENT_DISCONNECT = 1;
 
 	protected Socket socket;
 	protected InputStream is;
 	protected OutputStream os;
+	protected InputStreamProvider isProvider;
+	protected OutputStreamProvider osProvider;
 	protected ArrayList<Packet> packetQueue;
 	protected ArrayList<PacketListener> listeners;
 	protected ArrayList<DisconnectionListener> disconnectListeners;
 	protected TreeMap<String, ArrayList<PacketListener>> namedListeners;
-	protected int eventMode = EVENT_NOTHING;
+	protected boolean disconnect = false;
 	protected boolean running = false;
 
 	public PacketConnection(Socket socket) throws IOException {
+		this(socket, new ThroughInputStreamProvider(),
+				new ThroughOutputStreamProvider());
+	}
+
+	public PacketConnection(Socket socket, InputStreamProvider inProv,
+			OutputStreamProvider outProv) throws IOException {
 		this.socket = socket;
 		is = socket.getInputStream();
 		os = socket.getOutputStream();
+		isProvider = inProv;
+		osProvider = outProv;
 		listeners = new ArrayList<PacketListener>();
 		namedListeners = new TreeMap<String, ArrayList<PacketListener>>();
 		packetQueue = new ArrayList<Packet>();
@@ -109,10 +121,11 @@ public class PacketConnection {
 				while (running) {
 					Packet packet = null;
 					try {
-						packet = PacketIO.readCompressedPacket(is);
+						packet = PacketIO.readPacket(isProvider
+								.getInputStream(is));
 					} catch (SocketException e) {
 					} catch (EOFException e) {
-						eventMode |= EVENT_DISCONNECT;
+						disconnect = true;
 						break;
 					} catch (IOException e) {
 					}
@@ -138,8 +151,7 @@ public class PacketConnection {
 						if (packet != null)
 							alertListeners(packet);
 					} else {
-						if ((eventMode & EVENT_DISCONNECT) == EVENT_DISCONNECT) {
-							eventMode ^= EVENT_DISCONNECT;
+						if (disconnect) {
 							running = false;
 							alertDisconnect();
 							try {
@@ -177,7 +189,7 @@ public class PacketConnection {
 	}
 
 	public void stop() {
-		eventMode |= EVENT_DISCONNECT;
+		disconnect = true;
 	}
 
 	public Socket getSocket() {
@@ -185,7 +197,7 @@ public class PacketConnection {
 	}
 
 	public void sendPacket(Packet packet) throws IOException {
-		PacketIO.writeCompressedPacket(os, packet);
+		PacketIO.writePacket(osProvider.getOutputStream(os), packet);
 		os.flush();
 	}
 }
