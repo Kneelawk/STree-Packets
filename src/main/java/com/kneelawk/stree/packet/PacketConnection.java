@@ -114,60 +114,62 @@ public class PacketConnection {
 	}
 
 	public PacketConnection start() {
-		running = true;
-		Thread reader = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (running) {
-					Packet packet = null;
-					try {
-						packet = PacketIO.readPacket(isProvider
-								.getInputStream(is));
-					} catch (SocketException e) {
-					} catch (EOFException e) {
-						disconnect = true;
-						break;
-					} catch (IOException e) {
-					}
-
-					if (packet != null) {
-						packetQueue.add(packet);
-					}
-				}
-			}
-		}, "PacketReader");
-		Thread queueListener = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (running) {
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					if (packetQueue.size() > 0) {
-						Packet packet = packetQueue.get(0);
-						packetQueue.remove(0);
-						if (packet != null)
-							alertListeners(packet);
-					} else {
-						if (disconnect) {
-							running = false;
-							alertDisconnect();
-							try {
-								is.close();
-								os.close();
-								socket.close();
-							} catch (IOException e2) {
-							}
+		if (!running) {
+			running = true;
+			Thread reader = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					while (running) {
+						Packet packet = null;
+						try {
+							packet = PacketIO.readPacket(isProvider
+									.getInputStream(is));
+						} catch (SocketException e) {
+						} catch (EOFException e) {
+							disconnect = true;
 							break;
+						} catch (IOException e) {
+						}
+
+						if (packet != null) {
+							packetQueue.add(packet);
 						}
 					}
 				}
-			}
-		}, "EventListener");
-		reader.start();
-		queueListener.start();
+			}, "PacketReader");
+			Thread queueListener = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					while (running) {
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						if (packetQueue.size() > 0) {
+							Packet packet = packetQueue.get(0);
+							packetQueue.remove(0);
+							if (packet != null)
+								alertListeners(packet);
+						} else {
+							if (disconnect) {
+								running = false;
+								alertDisconnect();
+								try {
+									is.close();
+									os.close();
+									socket.close();
+								} catch (IOException e2) {
+								}
+								break;
+							}
+						}
+					}
+				}
+			}, "EventListener");
+			reader.start();
+			queueListener.start();
+		}
 		return this;
 	}
 

@@ -187,48 +187,52 @@ public class PacketServerConnection {
 	}
 
 	public PacketServerConnection start() {
-		running = true;
-		Thread connListen = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (running) {
-					Socket clientSocket = null;
-					try {
-						clientSocket = socket.accept();
-						clientSocket.setTcpNoDelay(true);
-					} catch (SocketException e) {
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					if (clientSocket != null) {
-						SCD desc = new SCD(clientSocket.getInetAddress(),
-								clientSocket.getPort());
-						PacketConnection conn = null;
+		if (!running) {
+			running = true;
+			Thread connListen = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					while (running) {
+						Socket clientSocket = null;
 						try {
-							conn = new PacketConnection(clientSocket,
-									isProvider, osProvider);
+							clientSocket = socket.accept();
+							clientSocket.setTcpNoDelay(true);
+						} catch (SocketException e) {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						if (conn != null) {
-							addListeners(conn, desc);
-							conn.addDisconnectionListener(new DisconnectionListener() {
-								@Override
-								public void onSocketDisconnect(Socket socket,
-										PacketConnection connection) {
-									packetConnections.remove(new SCD(socket
-											.getInetAddress(), socket.getPort()));
-								}
-							});
-							packetConnections.put(desc, conn);
-							conn.start();
-							alertListeners(clientSocket, conn);
+						if (clientSocket != null) {
+							SCD desc = new SCD(clientSocket.getInetAddress(),
+									clientSocket.getPort());
+							PacketConnection conn = null;
+							try {
+								conn = new PacketConnection(clientSocket,
+										isProvider, osProvider);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							if (conn != null) {
+								addListeners(conn, desc);
+								conn.addDisconnectionListener(new DisconnectionListener() {
+									@Override
+									public void onSocketDisconnect(
+											Socket socket,
+											PacketConnection connection) {
+										packetConnections.remove(new SCD(socket
+												.getInetAddress(), socket
+												.getPort()));
+									}
+								});
+								packetConnections.put(desc, conn);
+								conn.start();
+								alertListeners(clientSocket, conn);
+							}
 						}
 					}
 				}
-			}
-		}, "ConnectionListener");
-		connListen.start();
+			}, "ConnectionListener");
+			connListen.start();
+		}
 		return this;
 	}
 
