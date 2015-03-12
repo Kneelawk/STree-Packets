@@ -4,7 +4,7 @@
 
 	<groupId>com.kneelawk.stree</groupId>
 	<artifactId>packet</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>packet</name>
@@ -13,24 +13,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
-	<plugins>
-		<plugin>
-			<groupId>com.ejwa</groupId>
-			<artifactId>maven-gitdep-plugin</artifactId>
-			<version>0.1</version>
-			<configuration>
-				<gitDependencies>
-					<gitDependency>
-						<groupId>com.kneelawk.stree</groupId>
-						<artifactId>core</artifactId>
-						<location>https://github.com/Kneelawk/STree.git</location>
-						<branch>master</branch>
-					</gitDependency>
-				</gitDependencies>
-			</configuration>
-		</plugin>
-	</plugins>
 
 	<dependencies>
 		<dependency>
@@ -43,7 +25,6 @@
 			<groupId>com.kneelawk.stree</groupId>
 			<artifactId>core</artifactId>
 			<version>1.1.0</version>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 </project>
